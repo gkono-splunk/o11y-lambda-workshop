@@ -4,17 +4,17 @@ linkTitle: 1. Setup
 weight: 1
 ---
 
-This lab will make a tracing superhero out of you!
+This workshop will make a tracing superhero out of you!
 
-In this lab you will learn how a distributed trace is constructed for a small serverless application that runs on AWS Lambda, producing and consuming your message via AWS Kinesis.
+In this workshop you will learn how a distributed trace is constructed for a small serverless application that runs on AWS Lambda, producing and consuming your message via AWS Kinesis.
 
 ![1-architecture](../images/1-architecture.png)
 
 ## Pre-requisites
 
-You should already have the lab content available on your EC2 lab host.
+You should already have the workshop content available on your EC2 host.
 
-Ensure that this lab's required folder o11y-lambda-lab is on your home directory:
+Ensure that this workshop's required folder o11y-lambda-workshop is on your home directory:
 
 {{< tabs >}}
 {{% tab title="Command" %}}
@@ -27,13 +27,13 @@ cd ~ && ls
 {{% tab title="Output" %}}
 
 ``` text
-o11y-lambda-lab
+o11y-lambda-workshop
 ```
 
 {{% /tab %}}
 {{< /tabs >}}
 
-{{% notice style="note" %}} If you don't see it, fetch the lab contents by running the following command:
+{{% notice style="note" %}} If you don't see it, fetch the workshop contents by running the following command:
 
 ``` bash
 git clone https://github.com/kdroukman/o11y-lambda-lab.git
@@ -45,7 +45,7 @@ git clone https://github.com/kdroukman/o11y-lambda-lab.git
 
 In your Splunk Observability Cloud Organisation (Org) obtain your Access Token and Realm Values.
 
-Please reset your environment variables from the earlier lab. Take care that for this lab we may be using different names - make sure to match the Environment Variable names below.
+Please reset your environment variables from the earlier workshop. Take care that for this workshop we may be using different names - make sure to match the Environment Variable names below.
 
 {{< tabs >}}
 {{% tab title="Export Environment Variables" %}}
@@ -67,7 +67,7 @@ Update your auto-instrumentation Serverless template to include new values from 
 {{% tab title="Substitute Environment Variables" %}}
 
 ``` bash
-cat ~/o11y-lambda-lab/auto/serverless_unset.yml | envsubst > ~/o11y-lambda-lab/auto/serverless.yml
+cat ~/o11y-lambda-workshop/auto/serverless_unset.yml | envsubst > ~/o11y-lambda-workshop/auto/serverless.yml
 ```
 
 {{% /tab %}}
@@ -79,7 +79,7 @@ Examine the output of the updated serverless.yml contents (you may need to scrol
 {{% tab title="Check file contents" %}}
 
 ``` bash
-cat ~/o11y-lambda-lab/auto/serverless.yml
+cat ~/o11y-lambda-workshop/auto/serverless.yml
 ```
 
 {{% /tab %}}
@@ -105,7 +105,7 @@ Update your manual instrumentation Serverless template to include new values fro
 {{% tab title="Substitute Environment Variables" %}}
 
 ``` bash
-cat ~/o11y-lambda-lab/manual/serverless_unset.yml | envsubst > ~/o11y-lambda-lab/manual/serverless.yml
+cat ~/o11y-lambda-workshop/manual/serverless_unset.yml | envsubst > ~/o11y-lambda-workshop/manual/serverless.yml
 ```
 
 {{% /tab %}}
@@ -117,7 +117,7 @@ Examine the output of the updated serverless.yml contents (you may need to scrol
 {{% tab title="Check file contents" %}}
 
 ``` bash
-cat ~/o11y-lambda-lab/manual/serverless.yml
+cat ~/o11y-lambda-workshop/manual/serverless.yml
 ```
 
 {{% /tab %}}
@@ -151,6 +151,6 @@ sls config credentials --provider aws --key AWS_ACCCESS_KEY_ID --secret AWS_ACCE
 
 This command will create a file `~/.aws/credentials` with your AWS Credentials populated.
 
-Note that we are using sls here, which is a Serverless framework for developing and deploying AWS Lambda functions. We will be using this command throughout the lab.
+Note that we are using sls here, which is a Serverless framework for developing and deploying AWS Lambda functions. We will be using this command throughout the workshop.
 
 Now you are set up and ready go!

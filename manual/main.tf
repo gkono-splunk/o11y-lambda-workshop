@@ -243,9 +243,6 @@ resource "aws_kinesis_stream" "lambda_streamer" {
         "IncomingBytes",
         "OutgoingBytes"
     ]
-    tags = {
-        o11y-workshop = "lambda-tracing"
-    }
 }
 
 # Source Mapping Lambda Consumer to Kinesis Stream

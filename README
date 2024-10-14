@@ -5,13 +5,16 @@ Workshop outline
     * aws-cli
         * which aws
             * sudo apt install awscli
-    * env variables
-        * o11y (as TF_VAR_ variables??)
-            * ACCESS_TOKEN
-            * REALM
+    * variables
+        * terraform
+            * o11y
+                * ACCESS_TOKEN
+                * REALM
+                * Lambda layer
             * PREFIX
-                * For the deployment.name value
+                * For the lambda functions and deployment.environment value
         * aws
+            * at the environment level
             * ACCESS_KEY_ID
             * SECRET_ACCESS_KEY
     * terraform

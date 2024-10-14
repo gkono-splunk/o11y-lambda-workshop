@@ -71,7 +71,7 @@ resource "aws_s3_bucket_acl" "lambda_bucket" {
 data "archive_file" "producer_app" {
   type = "zip"
 
-  source_file  = "${path.module}/handler/auto_producer.mjs"
+  source_file  = "${path.module}/handler/producer.mjs"
   output_path = "${path.module}/lambda_producer.zip"
 }
 
@@ -87,7 +87,7 @@ resource "aws_s3_object" "producer_app" {
 data "archive_file" "consumer_app" {
   type = "zip"
 
-  source_file  = "${path.module}/handler/auto_consumer.mjs"
+  source_file  = "${path.module}/handler/consumer.mjs"
   output_path = "${path.module}/lambda_consumer.zip"
 }
 
@@ -103,13 +103,13 @@ resource "aws_s3_object" "consumer_app" {
 
 # Create Lambda Functions
 resource "aws_lambda_function" "lambda_producer" {
-  function_name = "myProducer"
+  function_name = "${var.prefix.value}-producer"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.producer_app.key
 
   runtime = "nodejs20.x"
-  handler = "auto_producer.producer"
+  handler = "producer.producer"
 
   source_code_hash = data.archive_file.producer_app.output_base64sha256
 
@@ -117,28 +117,28 @@ resource "aws_lambda_function" "lambda_producer" {
 
   environment {
     variables = {
-      SPLUNK_ACCESS_TOKEN = "wSLOU3EIWLTOruPYkpymKw"
-      SPLUNK_REALM = "us1"
+      SPLUNK_ACCESS_TOKEN = var.o11y_cloud.access_token
+      SPLUNK_REALM = var.o11y_cloud.realm
       OTEL_SERVICE_NAME = "producer-lambda"
-      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=lambda-shop"
+      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix.value}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
       KINESIS_STREAM = aws_kinesis_stream.lambda_streamer.name
     }
   }
 
-  layers = ["arn:aws:lambda:us-east-1:254067382080:layer:splunk-apm:108"]
+  layers = [var.o11y_cloud.lambda_layer]
 
   timeout = 60
 }
 
 resource "aws_lambda_function" "lambda_consumer" {
-  function_name = "myConsumer"
+  function_name = "${var.prefix.value}-consumer"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.consumer_app.key
 
   runtime = "nodejs20.x"
-  handler = "auto_consumer.consumer"
+  handler = "consumer.consumer"
 
   source_code_hash = data.archive_file.consumer_app.output_base64sha256
 
@@ -146,15 +146,15 @@ resource "aws_lambda_function" "lambda_consumer" {
 
   environment {
     variables = {
-      SPLUNK_ACCESS_TOKEN = "wSLOU3EIWLTOruPYkpymKw"
-      SPLUNK_REALM = "us1"
+      SPLUNK_ACCESS_TOKEN = var.o11y_cloud.access_token
+      SPLUNK_REALM = var.o11y_cloud.realm
       OTEL_SERVICE_NAME = "consumer-lambda"
-      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=lambda-shop"
+      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix.value}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
     }
   }
 
-  layers = ["arn:aws:lambda:us-east-1:254067382080:layer:splunk-apm:108"]
+  layers = [var.o11y_cloud.lambda_layer]
 
   timeout = 60
 }

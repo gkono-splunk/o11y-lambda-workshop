@@ -25,6 +25,21 @@ resource "aws_iam_role" "lambda_kinesis" {
   })
 }
 
+variable "access_token" {
+  type = string
+}
+
+variable "realm" {
+  type = string
+}
+
+variable "lambda_layer" {
+  type = list(string)
+}
+
+variable "prefix" {
+  type = string
+}
 
 # Attach IAM Policies for Lambda and Kinesis
 resource "aws_iam_role_policy_attachment" "lambda_all_policy" {
@@ -103,7 +118,7 @@ resource "aws_s3_object" "consumer_app" {
 
 # Create Lambda Functions
 resource "aws_lambda_function" "lambda_producer" {
-  function_name = "${var.prefix.value}-producer"
+  function_name = "${var.prefix}-producer"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.producer_app.key
@@ -117,22 +132,22 @@ resource "aws_lambda_function" "lambda_producer" {
 
   environment {
     variables = {
-      SPLUNK_ACCESS_TOKEN = var.o11y_cloud.access_token
-      SPLUNK_REALM = var.o11y_cloud.realm
+      SPLUNK_ACCESS_TOKEN = var.access_token
+      SPLUNK_REALM = var.realm
       OTEL_SERVICE_NAME = "producer-lambda"
-      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix.value}-lambda-shop"
+      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
       KINESIS_STREAM = aws_kinesis_stream.lambda_streamer.name
     }
   }
 
-  layers = [var.o11y_cloud.lambda_layer]
+  layers = var.lambda_layer
 
   timeout = 60
 }
 
 resource "aws_lambda_function" "lambda_consumer" {
-  function_name = "${var.prefix.value}-consumer"
+  function_name = "${var.prefix}-consumer"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.consumer_app.key
@@ -146,15 +161,15 @@ resource "aws_lambda_function" "lambda_consumer" {
 
   environment {
     variables = {
-      SPLUNK_ACCESS_TOKEN = var.o11y_cloud.access_token
-      SPLUNK_REALM = var.o11y_cloud.realm
+      SPLUNK_ACCESS_TOKEN = var.access_token
+      SPLUNK_REALM = var.realm
       OTEL_SERVICE_NAME = "consumer-lambda"
-      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix.value}-lambda-shop"
+      OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
     }
   }
 
-  layers = [var.o11y_cloud.lambda_layer]
+  layers = var.lambda_layer
 
   timeout = 60
 }

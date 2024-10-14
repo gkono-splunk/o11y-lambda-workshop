@@ -1,0 +1,4 @@
+export TF_VAR_access_token="CHANGEME"
+export TF_VAR_realm="CHANGEME"
+export TF_VAR_lambda_layer='["CHANGEME"]'
+export TF_VAR_prefix="CHANGEME"

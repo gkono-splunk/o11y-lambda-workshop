@@ -6,7 +6,7 @@ Workshop outline
         * which aws
             * sudo apt install awscli
     * variables
-        * terraform
+        * terraform (as TF_VAR_ environment variables)
             * o11y
                 * ACCESS_TOKEN
                 * REALM

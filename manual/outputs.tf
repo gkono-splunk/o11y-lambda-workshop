@@ -2,19 +2,31 @@
 
 
 output "lambda_bucket_name" {
-  description = "Name of the S3 bucket used to store function code."
+  description = "S3 Bucket"
 
   value = aws_s3_bucket.lambda_bucket.id
 }
 
-output "function_name" {
-  description = "Name of the Lambda function."
+output "producer_function_name" {
+  description = "Lambda Producer"
 
   value = aws_lambda_function.lambda_producer.function_name
 }
 
-output "base_url" {
-  description = "Base URL for API Gateway stage."
+output "consumer_function_name" {
+  description = "Lambda Consumer"
 
-  value = aws_apigatewayv2_stage.lambda.invoke_url
+  value = aws_lambda_function.lambda_consumer.function_name
+}
+
+output "base_url" {
+  description = "Endpoint"
+
+  value = "${aws_apigatewayv2_stage.lambda.invoke_url}/producer"
+}
+
+output "environment" {
+  description = "Deployment Environment"
+
+  value = "${var.prefix}-lambda-shop"
 }

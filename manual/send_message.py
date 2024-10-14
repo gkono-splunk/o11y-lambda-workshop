@@ -9,7 +9,7 @@ name = input("> ")
 print("Enter your Superpower (e.g. flight, super-strength, observability)")
 superpower = input("> ")
 
-message = f"curl -d '{{ \"name\": \"{name}\", \"superpower\": \"{superpower}\" }}' \"$(terraform output -raw base_url)/producer\""
+message = f"curl -d '{{ \"name\": \"{name}\", \"superpower\": \"{superpower}\" }}' \"$(terraform output -raw base_url)\""
 
 count = 500
 

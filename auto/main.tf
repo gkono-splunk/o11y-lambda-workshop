@@ -25,11 +25,11 @@ resource "aws_iam_role" "lambda_kinesis" {
   })
 }
 
-variable "access_token" {
+variable "o11y_access_token" {
   type = string
 }
 
-variable "realm" {
+variable "o11y_realm" {
   type = string
 }
 
@@ -132,8 +132,8 @@ resource "aws_lambda_function" "lambda_producer" {
 
   environment {
     variables = {
-      SPLUNK_ACCESS_TOKEN = var.access_token
-      SPLUNK_REALM = var.realm
+      SPLUNK_ACCESS_TOKEN = var.o11y_access_token
+      SPLUNK_REALM = var.o11y_realm
       OTEL_SERVICE_NAME = "producer-lambda"
       OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
@@ -161,8 +161,8 @@ resource "aws_lambda_function" "lambda_consumer" {
 
   environment {
     variables = {
-      SPLUNK_ACCESS_TOKEN = var.access_token
-      SPLUNK_REALM = var.realm
+      SPLUNK_ACCESS_TOKEN = var.o11y_access_token
+      SPLUNK_REALM = var.o11y_realm
       OTEL_SERVICE_NAME = "consumer-lambda"
       OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"

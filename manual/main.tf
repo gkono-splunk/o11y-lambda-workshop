@@ -8,6 +8,22 @@ provider "aws" {
   }
 }
 
+variable "o11y_access_token" {
+  type = string
+}
+
+variable "o11y_realm" {
+  type = string
+}
+
+variable "otel_lambda_layer" {
+  type = list(string)
+}
+
+variable "prefix" {
+  type = string
+}
+
 # Create IAM Role
 resource "aws_iam_role" "lambda_kinesis" {
   name = "lambda_kinesis"
@@ -23,22 +39,6 @@ resource "aws_iam_role" "lambda_kinesis" {
       }
     }]
   })
-}
-
-variable "o11y_access_token" {
-  type = string
-}
-
-variable "o11y_realm" {
-  type = string
-}
-
-variable "lambda_layer" {
-  type = list(string)
-}
-
-variable "prefix" {
-  type = string
 }
 
 # Attach IAM Policies for Lambda and Kinesis
@@ -141,7 +141,7 @@ resource "aws_lambda_function" "lambda_producer" {
     }
   }
 
-  layers = var.lambda_layer
+  layers = var.otel_lambda_layer
 
   timeout = 60
 }
@@ -169,7 +169,7 @@ resource "aws_lambda_function" "lambda_consumer" {
     }
   }
 
-  layers = var.lambda_layer
+  layers = var.otel_lambda_layer
 
   timeout = 60
 }

@@ -7,58 +7,58 @@ const tracer = trace.getTracer('lambda-app');
 
 // Lambda Producer
 const producer = async( event ) => {
-    const kinesis = new KinesisClient({});
+  const kinesis = new KinesisClient({});
 
-	let statusCode = 200;
-	let message;
+  let statusCode = 200;
+  let message;
 
-	if (!event.body) {
-		return {
-			statusCode: 400,
-			body: JSON.stringify({
-				message: "No message body found",
-			}),
-		};
-	}
+  if (!event.body) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        message: "No message body found",
+      }),
+    };
+  }
 
-	const streamName = process.env.KINESIS_STREAM;
+  const streamName = process.env.KINESIS_STREAM;
 
-	// OpenTelemetry Manual Instrumentation
-	return tracer.startActiveSpan('put-record', async(span) => {
-		let carrier = {};
-		propagation.inject(context.active(), carrier);
-		const eventBody = Buffer.from(event.body, 'base64').toString();
-		const data = "{\"tracecontext\": " + JSON.stringify(carrier) + ", \"record\": " + eventBody + "}";
-		console.log(
-			`Record with Trace Context added:
-			${data}`
-		);
+  // OpenTelemetry Manual Instrumentation
+  return tracer.startActiveSpan('put-record', async(span) => {
+    let carrier = {};
+    propagation.inject(context.active(), carrier);
+    const eventBody = Buffer.from(event.body, 'base64').toString();
+    const data = "{\"tracecontext\": " + JSON.stringify(carrier) + ", \"record\": " + eventBody + "}";
+    console.log(
+      `Record with Trace Context added:
+      ${data}`
+    );
 
-		try {
-			await kinesis.send(
-				new PutRecordCommand({
-				StreamName: streamName,
-				PartitionKey: "1234",
-				Data: data,
-			}),
+    try {
+      await kinesis.send(
+        new PutRecordCommand({
+          StreamName: streamName,
+          PartitionKey: "1234",
+          Data: data,
+		}),
 	
-			message = `Message placed in the Event Stream: ${streamName}`
-			)
-		} catch ( error ) {
-			console.log(error);
-			message = error;
-			statusCode = 500;
-		}
+        message = `Message placed in the Event Stream: ${streamName}`
+      )
+    } catch ( error ) {
+      console.log(error);
+      message = error;
+      statusCode = 500;
+    }
 
-		span.end();
+    span.end();
 
-		return {
-			statusCode,
-			body: JSON.stringify({
-				message,
-			}),
-		};
-	});
+    return {
+      statusCode,
+      body: JSON.stringify({
+        message,
+      }),
+    };
+  });
 };
 
 export { producer };

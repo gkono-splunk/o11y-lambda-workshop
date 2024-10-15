@@ -3,9 +3,9 @@
 ## Intro
 This workshop will equip you to build a distributed trace for a small serverless application that runs on AWS Lambda, producing and consuming a message via AWS Kinesis.
 
-We will see how OpenTelemetry's auto-instrumentation captures traces and exports them to your target of choice.
+First, we will see how OpenTelemetry's auto-instrumentation captures traces and exports them to your target of choice.
 
-Next, we will see how we can enable context propagation with manual instrumentation.
+Then, we will see how we can enable context propagation with manual instrumentation.
 
 For this workshop Splunk has prepared an Ubuntu Linux instance in AWS/EC2 all pre-configured for you. To get access to the instance that you will be using in the workshop, please visit the URL provided by the workshop leader
 
@@ -334,28 +334,28 @@ import { context, propagation, trace, } from "@opentelemetry/api";
 ...
 const tracer = trace.getTracer('lambda-app');
 ...
-	return tracer.startActiveSpan('put-record', async(span) => {
-		let carrier = {};
-		propagation.inject(context.active(), carrier);
-		const eventBody = Buffer.from(event.body, 'base64').toString();
-		const data = "{\"tracecontext\": " + JSON.stringify(carrier) + ", \"record\": " + eventBody + "}";
-		console.log(
-			`Record with Trace Context added:
-			${data}`
-		);
+  return tracer.startActiveSpan('put-record', async(span) => {
+    let carrier = {};
+    propagation.inject(context.active(), carrier);
+    const eventBody = Buffer.from(event.body, 'base64').toString();
+    const data = "{\"tracecontext\": " + JSON.stringify(carrier) + ", \"record\": " + eventBody + "}";
+    console.log(
+      `Record with Trace Context added:
+      ${data}`
+    );
 
-		try {
-			await kinesis.send(
-				new PutRecordCommand({
-				StreamName: streamName,
-				PartitionKey: "1234",
-				Data: data,
-			}),
+    try {
+      await kinesis.send(
+        new PutRecordCommand({
+          StreamName: streamName,
+          PartitionKey: "1234",
+          Data: data,
+        }),
 	
-			message = `Message placed in the Event Stream: ${streamName}`
-			)
+        message = `Message placed in the Event Stream: ${streamName}`
+      )
 ...
-		span.end();
+    span.end();
 ```
 
 #### Extract Trace Context in the Consumer Function
@@ -368,21 +368,21 @@ The below code executes the following steps inside the consumer function:
 ```js
 import { propagation, trace, ROOT_CONTEXT } from "@opentelemetry/api";
 ...
-			const carrier = JSON.parse( message ).tracecontext;
-			const parentContext = propagation.extract(ROOT_CONTEXT, carrier);
-			const tracer = trace.getTracer(process.env.OTEL_SERVICE_NAME);
-			const span = tracer.startSpan("Kinesis.getRecord", undefined, parentContext);
+      const carrier = JSON.parse( message ).tracecontext;
+      const parentContext = propagation.extract(ROOT_CONTEXT, carrier);
+      const tracer = trace.getTracer(process.env.OTEL_SERVICE_NAME);
+      const span = tracer.startSpan("Kinesis.getRecord", undefined, parentContext);
 
-			span.setAttribute("span.kind", "server");
-			const body = JSON.parse( message ).record;
-			if (body.name) {
-				span.setAttribute("custom.tag.name", body.name);
-			}
-			if (body.superpower) {
-				span.setAttribute("custom.tag.superpower", body.superpower);
-			}
+      span.setAttribute("span.kind", "server");
+      const body = JSON.parse( message ).record;
+      if (body.name) {
+        span.setAttribute("custom.tag.name", body.name);
+      }
+      if (body.superpower) {
+        span.setAttribute("custom.tag.superpower", body.superpower);
+      }
 ...
-			span.end();
+      span.end();
 ```
 
 Now let's see the different this makes!

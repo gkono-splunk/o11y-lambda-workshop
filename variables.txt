@@ -1,3 +1,6 @@
+export AWS_ACCESS_KEY_ID="CHANGEME"
+export AWS_SECRET_ACCESS_KEY="CHANGEME"
+
 export TF_VAR_o11y_access_token="CHANGEME"
 export TF_VAR_o11y_realm="CHANGEME"
 export TF_VAR_otel_lambda_layer='["CHANGEME"]'

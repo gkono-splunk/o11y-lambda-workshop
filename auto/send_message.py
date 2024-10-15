@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
+import argparse
 import os
 from time import sleep
 
 
-print("Enter your Name (e.g. Damian, Buttercup, etc.)")
-name = input("> ")
+parser = argparse.ArgumentParser(
+    prog='send_message',
+    description='Sends a message to your Lambda Producer\'s endpoint'
+)
 
-print("Enter your Superpower (e.g. flight, super-strength, observability)")
-superpower = input("> ")
+parser.add_argument(
+    "--name",
+    help="Enter your name, e.g. John, Damian, Yussef",
+    type=str)
+parser.add_argument(
+    "--superpower",
+    help="Enter you superpower, e.g. flight, super-strength, observability",
+    type=str)
+
+args = parser.parse_args()
+name = args.name
+superpower = args.superpower
 
 message = f"curl -d '{{ \"name\": \"{name}\", \"superpower\": \"{superpower}\" }}' \"$(terraform output -raw base_url)\""
 

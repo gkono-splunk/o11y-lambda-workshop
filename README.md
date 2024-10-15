@@ -9,7 +9,7 @@ Then, we will see how we can enable context propagation with manual instrumentat
 
 For this workshop Splunk has prepared an Ubuntu Linux instance in AWS/EC2 all pre-configured for you. To get access to the instance that you will be using in the workshop, please visit the URL provided by the workshop leader
 
-![Lambda application, not yet instrumented](/guide/images/1-architecture.png)
+![Lambda application, not yet instrumented](/images/01-Architecture.png)
 
 ## Prerequisites
 
@@ -88,14 +88,14 @@ cd ~/o11y-lambda-workshop/auto
 
 Inspect the contents of this directory with the `ls` command. Take a closer look at the `main.tf` file
 ```bash
-more main.tf
+cat main.tf
 ```
 
 #### _Workshop Questions_
 > _Can you identify which AWS resources are being created by this template?_
 
 > _Can you identify where OpenTelemetry instrumentation is being set up?_
->  - _Hint: study the lambda function definitions starting on line 134_
+>  - _Hint: study the lambda function definitions starting on or around line 134_
 
 > _Can you dtermine which instrumentation information is being provided by the environment variables you set earlier?_
 
@@ -128,16 +128,23 @@ You can see the relevant layer ARNs (Amazon Resource Name) and latest versions f
 
 Next, let's take a look at the function code.
 ```bash
-more handler/producer.mjs
+cat handler/producer.mjs
 ```
 - This NodeJS module contains the code for the producer function.
 - Essentially, this function receives a message, and puts a record to the targeted Kinesis Stream
 
 ###### Initialize the `auto` directory for Terraform
+- Ensure you are in the `auto` directory
+  - `pwd`
+    - The expected output would be **~/o11y-lambda-workshop/auto**
+- If you are not in the `auto` directory, run the following command
+```bash
+cd ~/o11y-lambda-workshop/auto
+```
 ```bash
 terraform init
 ```
-- This enables Terraform to manage the creation, state and destruction of resources, as defined within the `main.tf` file
+- This enables Terraform to manage the creation, state and destruction of resources, as defined within the `main.tf` file of the `auto` directory
 
 ###### Deploy the Lambda functions and other AWS resources
 ```bash
@@ -148,11 +155,13 @@ terraform apply
 ```bash
 Outputs:
 
-base_url = "https://______.amazonaws.com/serverless_stage/producer"
-consumer_function_name = "_____-consumer"
-environment = "______-lambda-shop"
 lambda_bucket_name = "lambda-shop-______-______"
+base_url = "https://______.amazonaws.com/serverless_stage/producer"
 producer_function_name = "______-producer"
+producer_log_group_arn = "arn:aws:logs:us-east-1:############:log-group:/aws/lambda/______-producer"
+consumer_function_name = "_____-consumer"
+consumer_log_group_arn = "arn:aws:logs:us-east-1:############:log-group:/aws/lambda/______-consumer"
+environment = "______-lambda-shop"
 ```
 
 ###### Send some traffic to your endpoint
@@ -166,31 +175,63 @@ cd ~/o11y-lambda-workshop/auto
 
 The `send_message.py` script is a Python script that will take input at the command line, add it to a JSON dictionary, and send it to the endpoint for your Lambda producer function repeatedly, as part of a while loop.
 
-- Run the `send_message.py` script
-  - It will ask you to input a `name` and a `superpower`
+- Run the `send_message.py` script as a background process
+  - _It requires the `--name` and `--superpower` arguments_
 ```bash
-./send_message.py
-Enter you Name (e.g. Damian, Buttercup, etc.)
-> 
-Enter your Superpower (e.g. flight, super-strength, observability)
->
-499 calls left
-{"message": "Message placed in the Event Stream: hostname-eventStream"}0
+nohup ./send_message.py --name CHANGEME --superpower CHANGEME &
 ```
 
-- You should see the following output if your message is successful
+> the `nohup` command ensures the script will not hang up when sent to the background. It also captures any output from our command in a nohup.out file in the same folder as the one you're currently in.
+
+> the `&` tells our shell process to run this process in the background, thus freeing our shell to run other commands
+
+- You should see an output similar to the following if your message is successful
 ```bash
-{"message": "Message placed in the Event Stream: hostname-eventStream"}0
+[1] 79829
+user@host manual % appending output to nohup.out
 ```
+- _The two most import bits of information here are:_
+  - _The process ID on the first line (`79829` in the case of my example), and_
+  - _The `appending output to nohup.out` message_
+
+- Next, check the contents of the nohup.out file, to ensure your output confirms your requests to your `producer-lambda` endpoint are successful
+```bash
+cat nohup.out
+```
+
+- You should see the following output among the lines printed to your screen if your message is successful:
+```bash
+{"message": "Message placed in the Event Stream: hostname-eventStream"}
+```
+
 - If unsuccessful, you will see:
 ```bash
-{"message": "Internal server error"}0
+{"message": "Internal server error"}
 ```
-- If this occurs, ask one of the workshop facilitators for assistance.
+
+> [!IMPORTANT]
+> If this occurs, ask one of the workshop facilitators for assistance.
 
 ------------------------------------------
-*** ***VIEW LAMBDA LOGS*** ***
-- _PROVIDE THE INSTRUCTIONS FOR THIS STEP_
+###### VIEW LAMBDA LOGS
+Next, you will check the lanbda logs output
+
+- Run the following script to view your `producer-lambda` logs:
+```bash
+./get_logs.py --function producer
+```
+- Hit `[CTRL + C ]` to stop the live stream after some log events show up
+
+- Run the following to view your `consumer-lambda` logs:
+```bash
+./get_logs.py --function consumer
+```
+- Hit `[CTRL + C ]` to stop the live stream after some log events show up
+
+Examine the logs carefully.
+
+#### _Workshop Question_
+> Do you see OpenTelemetry being loaded? Look out for the lines with `splunk-extension-wrapper`
 ------------------------------------------
 
 #### View your Lambda Functions in Splunk APM
@@ -204,30 +245,31 @@ Now it's time to check how your Lambda traffic has been captured in Splunk APM.
 #### _NOTE_
 > _It may take a few minutes for your traces to appear in Splunk APM. Try hitting refresh on your browser until you find your environment name in the list of environments._
 
-![Splunk APM, Environment Name](/guide/images/3-splunk-1-APM-EnvironmentName.png)
+![Splunk APM, Environment Name](/images/02-Auto-APM-EnvironmentName.png)
 
 ###### View your Environment's Service Map
 - Select `Service Map` on the right side of the APM Overview page.
 
-![Splunk APM, Environment Name](/guide/images/3-splunk-2-ServiceMap.png)
+![Splunk APM, Service Map Button](/images/03-Auto-ServiceMapButton.png)
 
 - You should be able to see the `producer-lambda` function and the call it is making to the Kinesis service to put your message as a record
 
-<!-- Add an image of the Service Map page in Splunk APM here with the producer-lambda -> Kinesis functions showing -->
+![Splunk APM, Service Map](/images/04-Auto-ServiceMap.png)
 
 #### _Workshop Question_
 > _What about your `consumer-lambda` function?_
 
 ###### Explore Lambda Traces
-- Click into `Traces` and examins some of the traces generated by the `producer-lambda` function and sent to Splunk Observability Cloud
+- Click into `Traces` to get into the Trace Analyzer
+  - Examine some of the traces generated by the `producer-lambda` function and sent to Splunk Observability Cloud
 
-<!-- Add an image of the Traces button in the Service Map view here -->
+![Splunk APM, Trace Button](/images/05-Auto-TraceButton.png)
 
 - Select a trace to view by clicking on its `Trace ID`
 
-<!-- Add an image of the Traces view here -->
+![Splunk APM, Trace Analyzer](/images/06-Auto-TraceAnalyzer.png)
 
-<!-- Add an image of the Trace view for the select Trace -->
+![Splunk APM, Trace and Spans](/images/07-Auto-TraceNSpans.png)
 
 We can see that the `producer-lambda` function is putting a record into the Kinesis Stream. But the action of the `consumer-lambda` function is missing!
 
@@ -238,10 +280,16 @@ Not yet, at least...
 Let's see how we work around this in the next section of this workshop
 
 #### Clean Up
-- If the `send_message.py` script is still running, stop it with the follwing command
+
+###### Kill the `send_message`
+- If the `send_message.py` script is still running, stop it with the follwing commands
 ```bash
-CTRL+C
+fg
 ```
+- This brings your background process to the foreground.
+- Next you can hit `[CTRL + C]` to kill the process.
+
+###### Destroy all AWS resources
 - Ensure you are in the `auto` directory
   - `pwd`
     - The expected output would be **~/o11y-lambda-workshop/auto**
@@ -266,7 +314,7 @@ cd ~/o11y-lambda-workshop/manual
 
 Inspect the contents of this directory with the `ls` command. Take a closer look at the `main.tf` file
 ```bash
-more main.tf
+cat main.tf
 ```
 
 #### _Workshop Question_
@@ -289,7 +337,7 @@ There's quite a few differences here!
 
 You may wish to view the entire file and examine its content
 ```bash
-more handler/producer.mjs
+cat handler/producer.mjs
 ```
 
 Notice how we are now importing some OpenTelemetry objects directly into our function to handle some of the manual instrumentation tasks we require.
@@ -309,7 +357,7 @@ diff ~/o11y-lambda-workshop/auto/handler/consumer.mjs ~/o11y-lambda-workshop/man
 
 Here also, there are a few differences of note. Let's take a closer look
 ```bash
-more handler/consumer.mjs
+cat handler/consumer.mjs
 ```
 
 In this file, we are importing the following OpenTelemetry objects
@@ -409,11 +457,13 @@ terraform apply
 ```bash
 Outputs:
 
-base_url = "https://______.amazonaws.com/serverless_stage/producer"
-consumer_function_name = "_____-consumer"
-environment = "______-lambda-shop"
 lambda_bucket_name = "lambda-shop-______-______"
+base_url = "https://______.amazonaws.com/serverless_stage/producer"
 producer_function_name = "______-producer"
+producer_log_group_arn = "arn:aws:logs:us-east-1:############:log-group:/aws/lambda/______-producer"
+consumer_function_name = "_____-consumer"
+consumer_log_group_arn = "arn:aws:logs:us-east-1:############:log-group:/aws/lambda/______-consumer"
+environment = "______-lambda-shop"
 ```
 - As you can tell, aside from the first portion of the base_url, the output should be largely the same as when you ran the auto-instrumentation portion of this workshop
 
@@ -426,32 +476,64 @@ producer_function_name = "______-producer"
 cd ~/o11y-lambda-workshop/manual
 ```
 
-- Run the `send_message.py` script
+- Run the `send_message.py` script as a background process
 ```bash
-./send_message.py
-Enter you Name (e.g. Damian, Buttercup, etc.)
-> 
-Enter your Superpower (e.g. flight, super-strength, observability)
->
-499 calls left
-{"message": "Message placed in the Event Stream: hostname-eventStream"}0
+nohup ./send_message.py --name CHANGEME --superpower CHANGEME &
 ```
 
-- You should see the following output if your message is successful
+- You should see an output similar to the following if your message is successful
 ```bash
-{"message": "Message placed in the Event Stream: hostname-eventStream"}0
+[1] 79829
+user@host manual % appending output to nohup.out
 ```
+
+- Next, check the contents of the nohup.out file, to ensure your output confirms your requests to your `producer-lambda` endpoint are successful
+```bash
+cat nohup.out
+```
+
+- You should see the following output among the lines printed to your screen if your message is successful:
+```bash
+{"message": "Message placed in the Event Stream: hostname-eventStream"}
+```
+
 - If unsuccessful, you will see:
 ```bash
-{"message": "Internal server error"}0
+{"message": "Internal server error"}
 ```
-- If this occurs, ask one of the workshop facilitators for assistance.
+
+> [!IMPORTANT]
+> If this occurs, ask one of the workshop facilitators for assistance.
 
 ------------------------------------------
-*** ***VIEW LAMBDA LOGS*** ***
-- _PROVIDE THE INSTRUCTIONS FOR THIS STEP_
+###### VIEW LAMBDA LOGS
+Check the lanbda logs output
 
-![Lambda Consumer Logs, Manual Instruamentation](/guide/images/5-Redeploy-ConsumerLogs.png)
+- Run the following script to view your `producer-lambda` logs:
+```bash
+./get_logs.py --function producer
+```
+- Hit `[CTRL + C ]` to stop the live stream after some log events show up
+
+- Run the following to view your `consumer-lambda` logs:
+```bash
+./get_logs.py --function consumer
+```
+- Hit `[CTRL + C ]` to stop the live stream after some log events show up
+
+Examine the logs carefully.
+
+#### _Workshop Question_
+> Do you notice the difference?
+
+- This time, we can see in the consumer-lambda log events that we are logging our Record together with the Trace context that we added to it.
+  - That Trace context includes an ID for the trace (look at the `traceparent` and its value)
+  - The Trace ID is included in that `traceparent`.
+    
+- Copy the Trace ID, and save it. We will need it for a later step in this workshop
+  - To copy the appropriate Trace ID, focus on the second group of numbers between the `-`, as highlighted in the example screenshot below.
+
+![Lambda Consumer Logs, Manual Instruamentation](/images/08-Manual-ConsumerLogs.png)
 ------------------------------------------
 
 #### View your Lambda Functions in Splunk APM
@@ -471,16 +553,16 @@ Let's take a look at the Service Map for our environment in APM once again.
 
 - You should be able to see the `producer-lambda` function and the call it is making to the `consumer-lambda` function this time
 
-![Splunk APM, Service Map](/guide/images/6-Manual-ServiceMap.png)
+![Splunk APM, Service Map](/images/09-Manual-ServiceMap.png)
 
 ###### Explore Lambda Traces
 Next, we will take another look at a trace related to our Environment.
 
-Paste the value you got from the consumer function's logs into the `View Trace ID` search box under Traces and click `Go`
+Paste the Trace ID you copied from the consumer function's logs into the `View Trace ID` search box under Traces and click `Go`
 
-![Trace Search](/guide/images/6-Manual-TraceButton.png)
+![Splunk APM, Trace Button](/images/10-Manual-TraceButton.png)
 
-![Trace by ID](/guide/images/6-manual-TraceByID.png)
+![Splunk APM, Trace by ID](/images/11-Manual-TraceByID.png)
 
 #### _NOTE_
 > _Notice that the Trace ID was a part of the trace context that we propagated. The OTel Lambda Layer_
@@ -501,13 +583,19 @@ Click on the `consumer-lambda` span.
 #### _Workshop Question_
 > _Can you find the attributes from your message?_
 
-![Trace, Span Tags](/guide/images/6-Manual-SpanTags.png)
+![Splunk APM, Span Tags](/images/12-Manual-SpanTags.png)
 
 #### Clean Up
+
+###### Kill the `send_message` script
 - If the `send_message.py` script is still running, stop it with the follwing command
 ```bash
-CTRL+C
+fg
 ```
+- This brings your background process to the foreground.
+- Next you can hit `[CTRL + C]` to kill the process.
+
+###### Destroy all AWS resources
 - Ensure you are in the `manual` directory
   - `pwd`
     - The expected output would be **~/o11y-lambda-workshop/manual**
@@ -526,6 +614,6 @@ terraform destroy
 
 Congratulations on finishing the workshop. You have seen how we can complement auto-instrumentation with manual steps to force the `producer-lambda` function's context to be sent to the `consumer-lambda` function via a record in a Kinesis stream. This allowed us to build the expected Distributed Trace, and to contextualize the relationship between both functions in Splunk APM.
 
-![Lambda application, now fully instrumented](/guide/images/7-conclusion-1-architecture.png)
+![Lambda application, fully instrumented](/images/13-Architecture_Instrumented.png)
 
 You can now build out a trace manually by linking two different functions together. This is very power when your auto-instrumentation, or 3rd-party systems, do not support context propagation out of the box.

@@ -155,7 +155,7 @@ First, let us take a look at the `o11y-lambda-workshop/auto` directory, and some
 > _Can you identify where OpenTelemetry instrumentation is being set up?_
 >  - _Hint: study the lambda function definitions_
 
-> _Can you dtermine which instrumentation information is being provided by the environment variables you set earlier?_
+> _Can you determine which instrumentation information is being provided by the environment variables you set earlier?_
 
 You should see a section where the environment variables for each lambda function are being set.
   ```bash
@@ -326,13 +326,13 @@ Next, let's take a look at the logs for our Lambda functions.
   ```bash
   ./get_logs.py --function producer
   ```
-  - Hit `[CTRL + C]` to stop the live stream after some log events show up
+  - Hit `[Control-C]` to stop the live stream after some log events show up
 
 - Run the following to view your `consumer-lambda` logs:
   ```bash
   ./get_logs.py --function consumer
   ```
-  - Hit `[CTRL + C]` to stop the live stream after some log events show up
+  - Hit `[Control-C]` to stop the live stream after some log events show up
 
 Examine the logs carefully.
 
@@ -403,7 +403,7 @@ The resources we deployed as part of this auto-instrumenation exercise need to b
   fg
   ```
   - This brings your background process to the foreground.
-  - Next you can hit `[CTRL + C]` to kill the process.
+  - Next you can hit `[Control-C]` to kill the process.
 
 #### Destroy all AWS resources
 Terraform is great at managing the state of our resources individually, and as a deployment. It can even update deployed resources with any changes to their definitions. But to start afresh, we will destroy the resources and redeploy them as part of the manual instrumentation portion of this workshop.
@@ -653,13 +653,13 @@ Let's see what our logs look like now.
   ```bash
   ./get_logs.py --function producer
   ```
-  - Hit `[CTRL + C]` to stop the live stream after some log events show up
+  - Hit `[Control-C]` to stop the live stream after some log events show up
 
 - Run the following to view your `consumer-lambda` logs:
   ```bash
   ./get_logs.py --function consumer
   ```
-  - Hit `[CTRL + C]` to stop the live stream after some log events show up
+  - Hit `[Control-C]` to stop the live stream after some log events show up
 
 Examine the logs carefully.
 
@@ -698,7 +698,7 @@ In Splunk Observability Cloud:
 ##### _Workshop Question_
 > _Notice the difference?_
 
-- You should be able to see the `producer-lambda` function and the call it is making to the `consumer-lambda` function this time!
+- You should be able to see the `producer-lambda` and `consumer-lambda` functions linked by the propagated context this time!
 
 ![Splunk APM, Service Map](/images/09-Manual-ServiceMap.png)
 
@@ -741,7 +741,7 @@ We are finally at the end of our workshop. Kindly clean up after yourself!
   fg
   ```
   - This brings your background process to the foreground.
-  - Next you can hit `[CTRL + C]` to kill the process.
+  - Next you can hit `[Control-C]` to kill the process.
 
 #### Destroy all AWS resources
 Terraform is great at managing the state of our resources individually, and as a deployment. It can even update deployed resources with any changes to their definitions. But to start afresh, we will destroy the resources and redeploy them as part of the manual instrumentation portion of this workshop.

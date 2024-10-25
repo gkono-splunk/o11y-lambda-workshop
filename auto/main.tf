@@ -176,14 +176,14 @@ resource "aws_lambda_function" "lambda_consumer" {
 
 # Add API Gateway API, Stage, Integration, Route and Permission Resources
 resource "aws_apigatewayv2_api" "lambda" {
-  name          = "serverless_gateway"
+  name          = "${var.prefix}-serverless_gateway"
   protocol_type = "HTTP"
 }
 
 resource "aws_apigatewayv2_stage" "lambda" {
   api_id = aws_apigatewayv2_api.lambda.id
 
-  name        = "serverless_stage"
+  name        = "${var.prefix}serverless_stage"
   auto_deploy = true
 
   access_log_settings {

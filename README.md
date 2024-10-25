@@ -22,6 +22,8 @@ Your workshop instructor will provide you with the following:
 
 > [!NOTE]
 > _Alternatively, you can deploy a local observability workshop instance using Multipass._
+
+> [!NOTE]
 > _The **Access Token** and **Realm** will be used by the OpenTelemetry Collector to forward your data to the correct Splunk Observability Cloud organization._
 
 ### AWS Command Line Interface (awscli)

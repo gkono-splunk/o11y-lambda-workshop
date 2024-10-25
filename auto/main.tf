@@ -26,7 +26,7 @@ variable "prefix" {
 
 # Create IAM Role
 resource "aws_iam_role" "lambda_kinesis" {
-  name = "lambda_kinesis"
+  name = "${var.prefix}-lambda_kinesis"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -134,7 +134,7 @@ resource "aws_lambda_function" "lambda_producer" {
     variables = {
       SPLUNK_ACCESS_TOKEN = var.o11y_access_token
       SPLUNK_REALM = var.o11y_realm
-      OTEL_SERVICE_NAME = "producer-lambda"
+      OTEL_SERVICE_NAME = "${var.prefix}-producer-lambda"
       OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
       KINESIS_STREAM = aws_kinesis_stream.lambda_streamer.name
@@ -163,7 +163,7 @@ resource "aws_lambda_function" "lambda_consumer" {
     variables = {
       SPLUNK_ACCESS_TOKEN = var.o11y_access_token
       SPLUNK_REALM = var.o11y_realm
-      OTEL_SERVICE_NAME = "consumer-lambda"
+      OTEL_SERVICE_NAME = "${var.prefix}-consumer-lambda"
       OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
     }
@@ -251,7 +251,7 @@ resource "aws_cloudwatch_log_group" "api_gw" {
 
 # Kinesis Data Stream
 resource "aws_kinesis_stream" "lambda_streamer" {
-    name = "lambda_streamer"
+    name = "${var.prefix}-lambda_streamer"
     shard_count = 1
     retention_period = 24
     shard_level_metrics = [

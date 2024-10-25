@@ -13,10 +13,12 @@ For this workshop Splunk has prepared an Ubuntu Linux instance in AWS/EC2 all pr
 ---
 ## Prerequisites
 
-### Observability Workshop Instance
+### Splunk Observability Workshop Instance, Access Token, Realm
 The Observability Workshop is most often completed on a Splunk-issued and preconfigured EC2 instance running Ubuntu.
 - Your workshop instructor will have provided you with your credentials to access your instance.
 - Alternatively, you can deploy a local observability workshop instance using Multipass.
+- Your workshop instructor will also provide you with the Splunk Observability Cloud __Access Token__ and __Realm__ for your workshop.
+  - These will be used by the OpenTelemetry Collector to forward your data to the correct Splunk Observability Cloud organization.
 
 ### AWS Command Line Interface (awscli)
 The AWS Command Line Interface, or `awscli`, is an API used to interact with AWS resources. In this workshop, it is used by certain scripts to interact with the resource you'll deploy. 

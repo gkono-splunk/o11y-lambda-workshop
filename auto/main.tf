@@ -24,47 +24,14 @@ variable "prefix" {
   type = string
 }
 
-# Create IAM Role
-resource "aws_iam_role" "lambda_kinesis" {
-  name = "${var.prefix}-lambda_kinesis"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Sid    = ""
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      }
-    }]
-  })
+# Get IAM Role
+data "aws_iam_role" "lambda_kinesis" {
+  name = lambda_kinesis
 }
 
-# Attach IAM Policies for Lambda and Kinesis
-resource "aws_iam_role_policy_attachment" "lambda_all_policy" {
-  role = aws_iam_role.lambda_kinesis.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_basic_policy" {
-  role = aws_iam_role.lambda_kinesis.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy_attachment" "kinesis_all_policy" {
-  role = aws_iam_role.lambda_kinesis.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
-}
-
-
-# Create S3 Bucket Name, Bucket, Ownership, ACL
-resource "random_pet" "lambda_bucket_name" {
-  prefix = "lambda-shop"
-}
-
+# Create S3 Bucket, Ownership, ACL
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = random_pet.lambda_bucket_name.id
+  bucket = ${var.prefix}-lambda-shop
 }
 
 resource "aws_s3_bucket_ownership_controls" "lambda_bucket" {

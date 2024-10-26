@@ -49,7 +49,7 @@ if function_type.function in ['producer', 'consumer']:
         text=True
     ).stdout
     
-    live_tail_command = f"aws logs tail --log-group-identifiers {log_group_name}"
+    live_tail_command = f"aws logs tail {log_group_name}"
 
     with open(f"{function_type.function}.log", "wb") as f:
         process = subprocess.run(shlex.split(live_tail_command), stdout=subprocess.PIPE)

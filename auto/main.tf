@@ -31,7 +31,7 @@ data "aws_iam_role" "lambda_kinesis" {
 
 # Create S3 Bucket, Ownership, ACL
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = ${var.prefix}-lambda-shop
+  bucket = "${var.prefix}-lambda-shop"
 }
 
 resource "aws_s3_bucket_ownership_controls" "lambda_bucket" {
@@ -143,7 +143,7 @@ resource "aws_lambda_function" "lambda_consumer" {
 
 # Add API Gateway API, Stage, Integration, Route and Permission Resources
 resource "aws_apigatewayv2_api" "lambda" {
-  name          = "${var.prefix}-serverless_gateway"
+  name          = "${var.prefix}-gateway"
   protocol_type = "HTTP"
 }
 

@@ -8,21 +8,6 @@ provider "aws" {
   }
 }
 
-variable "o11y_access_token" {
-  type = string
-}
-
-variable "o11y_realm" {
-  type = string
-}
-
-variable "otel_lambda_layer" {
-  type = list(string)
-}
-
-variable "prefix" {
-  type = string
-}
 
 # Get IAM Role
 data "aws_iam_role" "lambda_kinesis" {

@@ -89,7 +89,7 @@ resource "aws_lambda_function" "lambda_producer" {
       OTEL_SERVICE_NAME = "${var.prefix}-producer-lambda"
       OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
-      KINESIS_STREAM = aws_kinesis_stream.lambda_streamer.name
+      KINESIS_STREAM = aws_kinesis_stream.lambda_stream.name
     }
   }
 

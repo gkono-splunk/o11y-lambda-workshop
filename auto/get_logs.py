@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import logging
+# import logging
 import shlex
 import subprocess
 import sys
@@ -8,7 +8,7 @@ import sys
 
 
 # Create CloudWatchLogs client
-cloudwatch_logs = Session().create_client('logs')
+# cloudwatch_logs = Session().create_client('logs')
 
 parser = argparse.ArgumentParser(
     prog='get_logs',

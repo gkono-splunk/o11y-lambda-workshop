@@ -37,8 +37,7 @@ if function_type.function in ['producer', 'consumer']:
     response = cloudwatch_logs.start_live_tail(logGroupIdentifiers=log_group_arn)
     event_stream = response['responseStream']
     for event in event_stream:
-        if event['sessionUpdate']['sessionResults']:
-            print(event)
+        print(event)
     """
 
     # Get Log Group Name

@@ -16,7 +16,7 @@ output "producer_function_name" {
   value = aws_lambda_function.lambda_producer.function_name
 }
 
-output "producer_log_group_name {
+output "producer_log_group_name" {
   description = "Log Group Name for the Lambda Producer"
   value = aws_cloudwatch_log_group.lambda_producer.name
 }
@@ -31,7 +31,7 @@ output "consumer_function_name" {
   value = aws_lambda_function.lambda_consumer.function_name
 }
 
-output "consumer_log_group_name {
+output "consumer_log_group_name" {
   description = "Log Group Name for the Lambda Consumer"
   value = aws_cloudwatch_log_group.lambda_consumer.name
 }

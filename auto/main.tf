@@ -26,7 +26,7 @@ variable "prefix" {
 
 # Get IAM Role
 data "aws_iam_role" "lambda_kinesis" {
-  name = lambda_kinesis
+  name = "lambda_kinesis"
 }
 
 # Create S3 Bucket, Ownership, ACL

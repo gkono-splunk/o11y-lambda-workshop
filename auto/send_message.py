@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
-import os
+# import logging
+import shlex
+import subprocess
 from time import sleep
 
 
@@ -18,17 +20,33 @@ parser.add_argument(
     help="Enter you superpower, e.g. flight, super-strength, observability",
     type=str)
 
+# Get user arguments
 args = parser.parse_args()
 name = args.name
 superpower = args.superpower
 
-message = f"curl -d '{{ \"name\": \"{name}\", \"superpower\": \"{superpower}\" }}' \"$(terraform output -raw base_url)\""
 
-count = 500
+# Get endpoint URL
+endpoint = subprocess.run(
+    shlex.split(
+        "terraform output -raw base_url"),
+    stdout=subprocess.PIPE,
+    text=True
+).stdout
 
+# Define curl command
+request = f"curl -d '{{ \"name\": \"{name}\", \"superpower\": \"{superpower}\" }}' {endpoint}"
+
+count = 1000
 while count > 0:
     print(f"{ count - 1 } calls left")
-    message_response = os.system(message)
-    print(message_response)
     count -= 1
-    sleep(3)
+    
+    response = subprocess.run(
+        shlex.split(request),
+        stdout=subprocess.PIPE,
+        text=True
+    ).stdout
+    print(response)
+
+    sleep(1)

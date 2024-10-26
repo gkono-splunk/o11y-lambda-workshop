@@ -16,7 +16,7 @@ data "aws_iam_role" "lambda_kinesis" {
 
 # Create S3 Bucket, Ownership, ACL
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = "${var.prefix}-lambda-shop"
+  bucket = "${var.prefix}-lambda-code"
 }
 
 resource "aws_s3_bucket_ownership_controls" "lambda_bucket" {
@@ -128,14 +128,14 @@ resource "aws_lambda_function" "lambda_consumer" {
 
 # Add API Gateway API, Stage, Integration, Route and Permission Resources
 resource "aws_apigatewayv2_api" "lambda" {
-  name          = "${var.prefix}-gateway"
+  name = "${var.prefix}-gateway"
   protocol_type = "HTTP"
 }
 
 resource "aws_apigatewayv2_stage" "lambda" {
   api_id = aws_apigatewayv2_api.lambda.id
 
-  name        = "${var.prefix}serverless_stage"
+  name = "${var.prefix}-gw-stage"
   auto_deploy = true
 
   access_log_settings {
@@ -202,8 +202,8 @@ resource "aws_cloudwatch_log_group" "api_gw" {
 }
 
 # Kinesis Data Stream
-resource "aws_kinesis_stream" "lambda_streamer" {
-    name = "${var.prefix}-lambda_streamer"
+resource "aws_kinesis_stream" "lambda_stream" {
+    name = "${var.prefix}-lambda_stream"
     shard_count = 1
     retention_period = 24
     shard_level_metrics = [
@@ -215,7 +215,7 @@ resource "aws_kinesis_stream" "lambda_streamer" {
 # Source Mapping Lambda Consumer to Kinesis Stream
 resource "aws_lambda_event_source_mapping" "kinesis_lambda_event_mapping" {
     batch_size = 100
-    event_source_arn = aws_kinesis_stream.lambda_streamer.arn
+    event_source_arn = aws_kinesis_stream.lambda_stream.arn
     enabled = true
     function_name = aws_lambda_function.lambda_consumer.arn
     starting_position = "LATEST"

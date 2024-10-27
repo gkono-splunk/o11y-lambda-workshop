@@ -8,63 +8,15 @@ provider "aws" {
   }
 }
 
-variable "o11y_access_token" {
-  type = string
+
+# Get IAM Role
+data "aws_iam_role" "lambda_kinesis" {
+  name = "lambda_kinesis"
 }
 
-variable "o11y_realm" {
-  type = string
-}
-
-variable "otel_lambda_layer" {
-  type = list(string)
-}
-
-variable "prefix" {
-  type = string
-}
-
-# Create IAM Role
-resource "aws_iam_role" "lambda_kinesis" {
-  name = "${var.prefix}-lambda_kinesis"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Sid    = ""
-      Principal = {
-        Service = "lambda.amazonaws.com"
-      }
-    }]
-  })
-}
-
-# Attach IAM Policies for Lambda and Kinesis
-resource "aws_iam_role_policy_attachment" "lambda_all_policy" {
-  role = aws_iam_role.lambda_kinesis.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSLambda_FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_basic_policy" {
-  role = aws_iam_role.lambda_kinesis.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy_attachment" "kinesis_all_policy" {
-  role = aws_iam_role.lambda_kinesis.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
-}
-
-
-# Create S3 Bucket Name, Bucket, Ownership, ACL
-resource "random_pet" "lambda_bucket_name" {
-  prefix = "lambda-shop"
-}
-
+# Create S3 Bucket, Ownership, ACL
 resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = random_pet.lambda_bucket_name.id
+  bucket = "${var.prefix}-lambda-code"
 }
 
 resource "aws_s3_bucket_ownership_controls" "lambda_bucket" {
@@ -128,7 +80,7 @@ resource "aws_lambda_function" "lambda_producer" {
 
   source_code_hash = data.archive_file.producer_app.output_base64sha256
 
-  role = aws_iam_role.lambda_kinesis.arn
+  role = data.aws_iam_role.lambda_kinesis.arn
 
   environment {
     variables = {
@@ -137,7 +89,7 @@ resource "aws_lambda_function" "lambda_producer" {
       OTEL_SERVICE_NAME = "${var.prefix}-producer-lambda"
       OTEL_RESOURCE_ATTRIBUTES = "deployment.environment=${var.prefix}-lambda-shop"
       AWS_LAMBDA_EXEC_WRAPPER = "/opt/nodejs-otel-handler"
-      KINESIS_STREAM = aws_kinesis_stream.lambda_streamer.name
+      KINESIS_STREAM = aws_kinesis_stream.lambda_stream.name
     }
   }
 
@@ -157,7 +109,7 @@ resource "aws_lambda_function" "lambda_consumer" {
 
   source_code_hash = data.archive_file.consumer_app.output_base64sha256
 
-  role = aws_iam_role.lambda_kinesis.arn
+  role = data.aws_iam_role.lambda_kinesis.arn
 
   environment {
     variables = {
@@ -176,14 +128,14 @@ resource "aws_lambda_function" "lambda_consumer" {
 
 # Add API Gateway API, Stage, Integration, Route and Permission Resources
 resource "aws_apigatewayv2_api" "lambda" {
-  name          = "${var.prefix}-serverless_gateway"
+  name = "${var.prefix}-gateway"
   protocol_type = "HTTP"
 }
 
 resource "aws_apigatewayv2_stage" "lambda" {
   api_id = aws_apigatewayv2_api.lambda.id
 
-  name        = "${var.prefix}serverless_stage"
+  name = "${var.prefix}-gw-stage"
   auto_deploy = true
 
   access_log_settings {
@@ -250,8 +202,8 @@ resource "aws_cloudwatch_log_group" "api_gw" {
 }
 
 # Kinesis Data Stream
-resource "aws_kinesis_stream" "lambda_streamer" {
-    name = "${var.prefix}-lambda_streamer"
+resource "aws_kinesis_stream" "lambda_stream" {
+    name = "${var.prefix}-lambda_stream"
     shard_count = 1
     retention_period = 24
     shard_level_metrics = [
@@ -263,7 +215,7 @@ resource "aws_kinesis_stream" "lambda_streamer" {
 # Source Mapping Lambda Consumer to Kinesis Stream
 resource "aws_lambda_event_source_mapping" "kinesis_lambda_event_mapping" {
     batch_size = 100
-    event_source_arn = aws_kinesis_stream.lambda_streamer.arn
+    event_source_arn = aws_kinesis_stream.lambda_stream.arn
     enabled = true
     function_name = aws_lambda_function.lambda_consumer.arn
     starting_position = "LATEST"

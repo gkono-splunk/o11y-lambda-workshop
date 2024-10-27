@@ -103,7 +103,7 @@ while count > 0:
         text=True
     ).stdout
 
-    with open('response.logs') as response_logger:
+    with open('response.logs', 'a') as response_logger:
         print(response, file=response_logger)
         print(f"{ count } calls left", file=response_logger)
 

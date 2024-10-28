@@ -88,18 +88,16 @@ The Workshop Directory **o11y-lambda-workshop** is a repository that contains al
 #### AWS
 The AWS CLI requires that you have credentials to be able to access and manage resources deployed by their services. Both Terraform and the Python scripts in this workshop require these variables to perform their tasks.
 
-- Ensure the **awscli** is configured with the _**access key ID**_, _**secret access key**_ and _**region**_ for this workshop:
+- Configure the **awscli** with the _**access key ID**_, _**secret access key**_ and _**region**_ for this workshop:
   ```bash
-  aws configure list
+  aws configure
   ```
-    - _This command should output a table similar to the one below:_
+    - _This command should provide a prompt similar to the one below:_
       ```bash
-            Name                 Value              Type    Location
-            ----                 -----              ----    --------
-         profile             <not set>              None    None
-      access_key  ********************  shared-credentials-file
-      secret_key  ********************  shared-credentials-file
-          region             us-east-1       config-file    ~/.aws/config
+      AWS Access Key ID [None]: XXXXXXXXXXXXXXXX
+      AWS Secret Acces Key [None]: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      Default region name [None]: us-east-1
+      Default outoput format [None]:
       ```
 
 - If the **awscli** is not configured on your instance, run the following command and provide the values your instructor would provide you with.

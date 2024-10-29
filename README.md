@@ -9,7 +9,7 @@ Then, we will see how we can enable context propagation with manual instrumentat
 
 For this workshop Splunk has prepared an Ubuntu Linux instance in AWS/EC2 all pre-configured for you. To get access to the instance that you will be using in the workshop, please visit the URL provided by the workshop leader
 
-![Lambda application, not yet instrumented](/images/01-Architecture.png)
+![Lambda application, not yet manually instrumented](/images/01-Architecture.png)
 ---
 ## Prerequisites
 
@@ -30,7 +30,7 @@ Your instance should have the following environment variables already set:
 ### AWS Command Line Interface (awscli)
 The AWS Command Line Interface, or **awscli**, is an API used to interact with AWS resources. In this workshop, it is used by certain scripts to interact with the resource you'll deploy.
 
-Your Splunk-issued workshop instance should already have the **awscli** already installed.
+Your Splunk-issued workshop instance should already have the **awscli** installed.
 
 - Check if the **aws** command is installed on your instance with the following command:
   ```bash
@@ -53,6 +53,8 @@ We will be using Terraform at the command line in this workshop to deploy the fo
 4. CloudWatch Log Groups
 5. S3 Bucket
     - _and other supporting resources_
+  
+Your Splunk-issued workshop instance should already have **terraform** installed.
 
 - Check if the **terraform** command is installed on your instance:
   ```bash
@@ -132,19 +134,33 @@ We will be using a combination of _**variables.tf**_ and _**terraform.tfvars**_ 
   ```
   - _Ensure you change only the placeholders, leaving the quotes and brackets intact, where applicable._
   - _The _**prefix**_ is a unique identifier you can choose for yourself, to make your resources distinct from other participants' resources. We suggest using a short form of your name, for example._
+  - _Also, please only lowercase letters for the **prefix**. Certain resouces in AWS, such as S3, would through an error if you use uppercase letters._
 - Save your file and exit the editor.
 - Finally, copy the _**terraform.tfvars**_ file you just edited to the other directory.
   ```bash
   cp ~/o11y-lambda-workshop/auto/terraform.tfvars ~/o11y-lambda-workshop/manual
   ```
   - _We do this as we will be using the same values for both the autoinstrumentation and manual instrumentation protions of the workshop_
+ 
+### File Permissions
+While all other files are fine as they are, the **send_message.py** script in both the `auto` and `manual` will have to be executed as part of our workshop. As a result, it needs to have the appropriate permissions to run as expected. Follow these instructions to set them.
+
+- First, ensure you are in the `o11y-lambda-workshop` directory:
+  ```bash
+  cd ~/o11y-lambda-workshop
+  ```
+
+- Next, run the following command to set executable permissions on the `send_message.py` script:
+  ```bash
+  sudo chmod 755 auto/send_message.py manual/send_message.py
+  ```
 
 Now that we've squared off the prerequisites, we can get started with the workshop!
 
 ---
 
 ## Auto-Instrumentation
-The first part of our workshop will demonstrate how auto-instrumentation with OpenTelemetry allows the OpenTelemetry Collector to auto-detect what language your function is written in, and start capturing traces for those applications.
+The first part of our workshop will demonstrate how auto-instrumentation with OpenTelemetry allows the OpenTelemetry Collector to auto-detect what language your function is written in, and start capturing traces for those functions.
 
 ### The Auto-Instrumentation Workshop Directory & Contents
 First, let us take a look at the **o11y-lambda-workshop/auto** directory, and some of its files. This is where all the content for the auto-instrumentation portion of our workshop resides.
@@ -171,13 +187,12 @@ First, let us take a look at the **o11y-lambda-workshop/auto** directory, and so
   cat main.tf
   ```
 
-##### _Workshop Questions_
-> _Can you identify which AWS resources are being created by this template?_
-
-> _Can you identify where OpenTelemetry instrumentation is being set up?_
->  - _Hint: study the lambda function definitions_
-
-> _Can you determine which instrumentation information is being provided by the environment variables you set earlier?_
+{{% notice title="Workshop Questions" style="tip" icon="question" %}}
+- Can you identify which AWS resources are being created by this template?
+- Can you identify where OpenTelemetry instrumentation is being set up?
+  - _Hint: study the lambda function definitions_
+- Can you determine which instrumentation information is being provided by the environment variables we set earlier?
+{{% /notice %}}
 
 You should see a section where the environment variables for each lambda function are being set.
   ```bash
@@ -225,7 +240,6 @@ You should also see an argument for setting the Splunk OpenTelemetry Lambda laye
 - The OpenTelemetry Lambda layer is a package that contains the libraries and dependencies necessary to collector, process and export telemetry data for Lambda functions at the moment of invocation.
 
 - While there is a general OTel Lambda layer that has all the libraries and dependencies for all OpenTelemetry-supported languages, there are also language-specific Lambda layers, to help make your function even more lightweight.
-
   - _You can see the relevant Splunk OpenTelemetry Lambda layer ARNs (Amazon Resource Name) and latest versions for each AWS region [HERE](https://github.com/signalfx/lambda-layer-versions/blob/main/splunk-apm/splunk-apm.md)_
 
 #### The **producer.mjs** file
@@ -235,7 +249,6 @@ Next, let's take a look at the **producer-lambda** function code:
   ```bash
   cat ~/o11y-lambda-workshop/auto/handler/producer.mjs
   ```
-
   - This NodeJS module contains the code for the producer function.
   - Essentially, this function receives a message, and puts that message as a record to the targeted Kinesis Stream
 
@@ -333,7 +346,7 @@ In addition to that, the **send_message.py** script will also get the logs for y
       - _The process ID on the first line (**79829** in the case of my example), and_
       - _The **appending output to nohup.out** message_
     
-    - _The **nohup** command ensures the script will not hang up when sent to the background. It also captures any output from our command in a nohup.out file in the same directory as the one you're currently in._
+    - _The **nohup** command ensures the script will not hang up when sent to the background. It also captures the curl output from our command in a nohup.out file in the same directory as the one you're currently in._
 
     - _The **&** tells our shell process to run this process in the background, thus freeing our shell to run other commands._
 
@@ -380,13 +393,13 @@ Examine the logs carefully.
 The Lambda functions should be generating a sizeable amount of trace data, which we would need to take a look at. Through the combination of environment variables and the OpenTelemetry Lambda layer configured in the resource definition for our Lambda functions, we should now be ready to view our functions and traces in Splunk APM.
 
 #### View your Environment name in the Splunk APM Overview
-Let's start by making sure that Splunk APM is aware of our **Environment** from the trace data it is receiving. This is the **deployment.name** we set as part of the **OTEL_RESOURCE_ATTRIBUTES** variable we set on our Lambda function definitions in **main.tf**.
+Let's start by making sure that Splunk APM is aware of our **Environment** from the trace data it is receiving. This is the **deployment.name** we set as part of the **OTEL_RESOURCE_ATTRIBUTES** variable we set on our Lambda function definitions in **main.tf**. It was also one of the outputs from the **terraform apply** command we ran earlier.
 
 In Splunk Observability Cloud:
 - Click on the **APM** Button from the Main Menu on the left. This will take you to the Splunk APM Overview.
 
 - Select your APM Environment from the **Environment:** dropdown.
-  - _Your APM environment should be in the **PREFIX-lambda-shop** format, where the **PREFIX is obtained from the environment variable you set in the Prerequisites section_
+  - _Your APM environment should be in the **PREFIX-lambda-shop** format, where the **PREFIX** is obtained from the environment variable you set in the Prerequisites section_
 
 > [!NOTE]
 > _It may take a few minutes for your traces to appear in Splunk APM. Try hitting refresh on your browser until you find your environment name in the list of environments._
@@ -423,7 +436,7 @@ On this page, we can see the traces that have been ingested from the OpenTelemet
 
 We can see that the **producer-lambda** function is putting a record into the Kinesis Stream. But the action of the **consumer-lambda** function is missing!
 
-This is because the trace context is not being propagated. Trace context propagation is not supported out-of-the-box by Kinesis service at the time of this workshop. Our distributed trace stops at the Kinesis service, and we can't see the propagation any further.
+This is because the trace context is not being propagated. Trace context propagation is not supported out-of-the-box by Kinesis service at the time of this workshop. Our distributed trace stops at the Kinesis service, and because its context isn't automatically propagated through the stream, we can't see any further.
 
 Not yet, at least...
 
@@ -462,7 +475,7 @@ Please follow these steps to destroy your resources:
   - respond **yes** when you see the **Enter a value:** prompt
   - This will result in the resources being destroyed, leaving you with a clean environment
 
-This process will leave you with a few files and directories in the **auto** directory. Do not worry about those.
+This process will leave you with the files and directories created as a result of our activity. Do not worry about those.
 
 ---
 
@@ -650,7 +663,7 @@ Let's go ahead and deploy those resources once more!
     producer_log_group_name = "/aws/lambda/______-producer"
     ```
 
-As you can tell, aside from the first portion of the base_url and the log group ARNs, the output should be largely the same as when you ran the auto-instrumentation portion of this workshop up to this point.
+As you can tell, aside from the first portion of the base_url and the log group ARNs, the output should be largely the same as when you ran the auto-instrumentation portion of this workshop up to this same point.
 
 #### Send some traffic to the **producer-lambda** endpoint (**base_url**)
 Once more, we will send our **name** and **superpower** as a message to our endpoint. This will then be added to a record in our Kinesis Stream, along with our trace context.

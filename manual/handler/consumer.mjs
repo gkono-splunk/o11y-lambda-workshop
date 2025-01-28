@@ -15,7 +15,7 @@ const consumer = async( event ) => {
       const tracer = trace.getTracer(process.env.OTEL_SERVICE_NAME);
       const span = tracer.startSpan("Kinesis.getRecord", undefined, parentContext);
 
-      span.setAttribute("span.kind", "server");
+      span.setAttribute("span.kind", "CONSUMER");
       const body = JSON.parse( message ).record;
       if (body.name) {
         span.setAttribute("custom.tag.name", body.name);

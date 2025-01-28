@@ -3,7 +3,7 @@ import { KinesisClient, PutRecordCommand } from "@aws-sdk/client-kinesis";
 import { context, propagation, trace, } from "@opentelemetry/api";
 
 
-const tracer = trace.getTracer('lambda-app');
+const tracer = trace.getTracer(process.env.OTEL_SERVICE_NAME);
 
 // Lambda Producer
 const producer = async( event ) => {
@@ -24,7 +24,9 @@ const producer = async( event ) => {
   const streamName = process.env.KINESIS_STREAM;
 
   // OpenTelemetry Manual Instrumentation
-  return tracer.startActiveSpan('put-record', async(span) => {
+  return tracer.startActiveSpan('Kinesis.PutRecord', async(span) => {
+    span.setAttribute('span.kind', 'PRODUCER');
+    span.setAttribute('messaging.system', 'Kinesis');
     let carrier = {};
     propagation.inject(context.active(), carrier);
     const eventBody = Buffer.from(event.body, 'base64').toString();
